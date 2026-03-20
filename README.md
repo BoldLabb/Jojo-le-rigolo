@@ -37,8 +37,8 @@ S: $1.3 150k/1m ⣿⣿⣀⣀⣀⣀⣀⣀⣀⣀ 15% →5k out $6.5/h (12m) • L:
 
 ### Prerequis
 
-- [Bun](https://bun.sh) installe sur votre machine
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installe
+- [Node.js](https://nodejs.org) (v18+)
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
 
 ### Etapes
 
@@ -52,25 +52,32 @@ git clone <url-du-repo> ~/.claude/scripts/statusline
 
 ```bash
 cd ~/.claude/scripts/statusline
-bun install
+npm install
 ```
 
 3. **Configurer Claude Code** — ajouter dans `~/.claude/settings.json` :
 
+**macOS / Linux :**
 ```json
 {
   "statusLine": {
     "type": "command",
-    "command": "bun ~/.claude/scripts/statusline/src/index.ts",
+    "command": "~/.claude/scripts/statusline/node_modules/.bin/tsx ~/.claude/scripts/statusline/src/index.ts",
     "padding": 0
   }
 }
 ```
 
-> **Windows** : remplacer `bun` par le chemin complet si bun n'est pas dans le PATH :
-> ```json
-> "command": "C:/Users/<user>/.bun/bin/bun.exe C:/Users/<user>/.claude/scripts/statusline/src/index.ts"
-> ```
+**Windows** (si `node` n'est pas dans le PATH du shell bash) :
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "PATH=\"/c/Program Files/nodejs:$PATH\" C:/Users/<user>/.claude/scripts/statusline/node_modules/.bin/tsx C:/Users/<user>/.claude/scripts/statusline/src/index.ts",
+    "padding": 0
+  }
+}
+```
 
 4. **Relancer Claude Code** — la barre apparait au prochain message.
 
@@ -89,7 +96,7 @@ echo '{
   "context_window": { "total_input_tokens": 150000, "total_output_tokens": 5000, "context_window_size": 1000000, "used_percentage": 15, "remaining_percentage": 85, "current_usage": { "input_tokens": 120000, "output_tokens": 5000, "cache_creation_input_tokens": 20000, "cache_read_input_tokens": 10000 }},
   "exceeds_200k_tokens": false,
   "rate_limits": { "five_hour": { "used_percentage": 37, "resets_at": 1774033200 }, "seven_day": { "used_percentage": 24, "resets_at": 1774173600 }}
-}' | bun run ~/.claude/scripts/statusline/src/index.ts
+}' | npx tsx ~/.claude/scripts/statusline/src/index.ts
 ```
 
 ## Configuration

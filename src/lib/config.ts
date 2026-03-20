@@ -1,8 +1,10 @@
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { StatuslineConfig } from "./config-types";
 
-const CONFIG_DIR = join(import.meta.dir, "..", "..");
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const CONFIG_DIR = join(__dirname, "..", "..");
 const DEFAULTS_PATH = join(CONFIG_DIR, "defaults.json");
 const CONFIG_PATH = join(CONFIG_DIR, "statusline.config.json");
 

@@ -1,7 +1,9 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 
+import { readFileSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { defaultConfig, type StatuslineConfig } from "./lib/config";
 import { getContextData } from "./lib/context";
 import {
@@ -59,9 +61,9 @@ export {
 	type UsageLimit,
 } from "./lib/render-pure";
 
-const CONFIG_FILE_PATH = join(import.meta.dir, "..", "statusline.config.json");
+const CONFIG_FILE_PATH = join(dirname(fileURLToPath(import.meta.url)), "..", "statusline.config.json");
 const LAST_PAYLOAD_PATH = join(
-	import.meta.dir,
+	dirname(fileURLToPath(import.meta.url)),
 	"..",
 	"data",
 	"last_payload.txt",
@@ -78,7 +80,7 @@ async function loadConfig(): Promise<StatuslineConfig> {
 
 async function main() {
 	try {
-		const input: HookInput = await Bun.stdin.json();
+		const input: HookInput = JSON.parse(readFileSync(0, "utf-8"));
 
 		// Save last payload for debugging
 		await writeFile(LAST_PAYLOAD_PATH, JSON.stringify(input, null, 2));
@@ -119,7 +121,7 @@ async function main() {
 			await saveSessionV2(input, currentResetsAt);
 		}
 
-		const git = await getGitStatus();
+		const git = getGitStatus();
 
 		let contextTokens: number | null;
 		let contextPercentage: number | null;

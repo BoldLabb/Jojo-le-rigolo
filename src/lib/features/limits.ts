@@ -10,9 +10,11 @@
  */
 
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const DATA_DIR = join(import.meta.dir, "..", "..", "..", "data");
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const DATA_DIR = join(__dirname, "..", "..", "..", "data");
 const WINDOW_FILE = join(DATA_DIR, "usage_window.json");
 const FIVE_HOURS_MS = 5 * 60 * 60 * 1000;
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;

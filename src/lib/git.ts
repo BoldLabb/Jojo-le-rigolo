@@ -1,4 +1,4 @@
-import { $ } from "bun";
+import { execSync } from "node:child_process";
 
 export interface GitStatus {
 	branch: string;
@@ -17,9 +17,23 @@ export interface GitStatus {
 	};
 }
 
-export async function getGitStatus(): Promise<GitStatus> {
+function exec(cmd: string): { stdout: string; exitCode: number } {
 	try {
-		const isGitRepo = await $`git rev-parse --git-dir`.quiet().nothrow();
+		return {
+			stdout: execSync(cmd, {
+				encoding: "utf-8",
+				stdio: ["pipe", "pipe", "pipe"],
+			}),
+			exitCode: 0,
+		};
+	} catch (e: any) {
+		return { stdout: e.stdout ?? "", exitCode: e.status ?? 1 };
+	}
+}
+
+export function getGitStatus(): GitStatus {
+	try {
+		const isGitRepo = exec("git rev-parse --git-dir");
 		if (isGitRepo.exitCode !== 0) {
 			return {
 				branch: "no-git",
@@ -31,38 +45,38 @@ export async function getGitStatus(): Promise<GitStatus> {
 			};
 		}
 
-		const branchResult = await $`git branch --show-current`.quiet().text();
-		const branch = branchResult.trim() || "detached";
+		const branch =
+			exec("git branch --show-current").stdout.trim() || "detached";
 
 		// Commits ahead/behind remote
 		let ahead = 0;
 		let behind = 0;
 		try {
-			const abResult = await $`git rev-list --left-right --count HEAD...@{u}`
-				.quiet()
-				.nothrow()
-				.text();
-			if (abResult.trim()) {
-				const [a, b] = abResult.trim().split(/\s+/).map(Number);
+			const abResult = exec(
+				"git rev-list --left-right --count HEAD...@{u}",
+			);
+			if (abResult.exitCode === 0 && abResult.stdout.trim()) {
+				const [a, b] = abResult.stdout
+					.trim()
+					.split(/\s+/)
+					.map(Number);
 				ahead = a || 0;
 				behind = b || 0;
 			}
 		} catch {
-			// No upstream configured - that's OK
+			// No upstream configured
 		}
 
-		const diffCheck = await $`git diff-index --quiet HEAD --`.quiet().nothrow();
-		const cachedCheck = await $`git diff-index --quiet --cached HEAD --`
-			.quiet()
-			.nothrow();
+		const diffCheck = exec("git diff-index --quiet HEAD --");
+		const cachedCheck = exec("git diff-index --quiet --cached HEAD --");
 
 		if (diffCheck.exitCode !== 0 || cachedCheck.exitCode !== 0) {
-			const unstagedDiff = await $`git diff --numstat`.quiet().text();
-			const stagedDiff = await $`git diff --cached --numstat`.quiet().text();
-			const stagedFilesResult = await $`git diff --cached --name-only`
-				.quiet()
-				.text();
-			const unstagedFilesResult = await $`git diff --name-only`.quiet().text();
+			const unstagedDiff = exec("git diff --numstat").stdout;
+			const stagedDiff = exec("git diff --cached --numstat").stdout;
+			const stagedFilesResult = exec(
+				"git diff --cached --name-only",
+			).stdout;
+			const unstagedFilesResult = exec("git diff --name-only").stdout;
 
 			const parseStats = (diff: string) => {
 				let added = 0;
