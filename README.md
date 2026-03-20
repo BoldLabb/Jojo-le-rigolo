@@ -45,7 +45,7 @@ S: $1.3 150k/1m ⣿⣿⣀⣀⣀⣀⣀⣀⣀⣀ 15% →5k out $6.5/h (12m) • L:
 1. **Cloner le repo** dans le dossier scripts de Claude Code :
 
 ```bash
-git clone <url-du-repo> ~/.claude/scripts/statusline
+git clone https://github.com/BoldLabb/Jojo-le-rigolo.git ~/.claude/scripts/statusline
 ```
 
 2. **Installer les dependances** :
