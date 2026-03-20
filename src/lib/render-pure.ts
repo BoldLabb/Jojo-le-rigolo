@@ -149,14 +149,14 @@ function formatSessionPart(
 ): string {
 	// No context data yet - show placeholder
 	if (contextTokens === null || contextPercentage === null) {
-		return `${colors.gray("S:")} ${colors.gray("-")}`;
+		return `${colors.gray("Session")} ${colors.gray("-")}`;
 	}
 
 	const items: string[] = [];
 
 	if (config.cost.enabled) {
 		const formattedCost = formatCost(cost, config.cost.format);
-		items.push(`${colors.gray("$")}${colors.dimWhite(formattedCost)}`);
+		items.push(`${colors.green("$")}${colors.green(formattedCost)}`);
 	}
 
 	if (config.tokens.enabled) {
@@ -166,9 +166,9 @@ function formatSessionPart(
 		);
 		if (config.tokens.showMax) {
 			const formattedMax = formatTokens(maxTokens, config.tokens.showDecimals);
-			items.push(`${formattedUsed}${colors.gray("/")}${formattedMax}`);
+			items.push(`${colors.peach(contextTokens.toString().length > 3 ? Math.round(contextTokens / 1000) + "k" : contextTokens.toString())}${colors.gray("/")}${colors.peach(maxTokens >= 1000000 ? Math.round(maxTokens / 1000000) + "m" : Math.round(maxTokens / 1000) + "k")}`);
 		} else {
-			items.push(formattedUsed);
+			items.push(colors.peach(contextTokens.toString().length > 3 ? Math.round(contextTokens / 1000) + "k" : contextTokens.toString()));
 		}
 	}
 
@@ -189,7 +189,7 @@ function formatSessionPart(
 
 		if (config.percentage.showValue) {
 			pctParts.push(
-				`${colors.lightGray(contextPercentage.toString())}${colors.gray("%")}`,
+				`${colors.peach(contextPercentage.toString())}${colors.peach("%")}`,
 			);
 		}
 
@@ -198,14 +198,14 @@ function formatSessionPart(
 		}
 	}
 
-	if (config.alert200k?.enabled && exceeds200k) {
-		items.push(colors.orange("⚠>200k"));
+	if (config.alert200k?.enabled && contextTokens !== null && contextTokens >= 500000) {
+		items.push(colors.orange("⚠>500k"));
 	}
 
 	if (config.outputTokens?.enabled && outputTokens && outputTokens > 0) {
 		const formatted = formatTokens(outputTokens, false);
 		items.push(
-			`${colors.gray("→")}${formatted} ${colors.gray("out")}`,
+			`${colors.peach("→")}${formatted} ${colors.peach("out")}`,
 		);
 	}
 
@@ -214,7 +214,7 @@ function formatSessionPart(
 		const cph = cost / hours;
 		const formatted = formatCost(cph, config.costPerHour.format);
 		items.push(
-			`${colors.gray("$")}${colors.dimWhite(formatted)}${colors.gray("/h")}`,
+			`${colors.green("$")}${colors.green(formatted)}${colors.green("/h")}`,
 		);
 	}
 
@@ -234,7 +234,7 @@ function formatSessionPart(
 	const sep = config.infoSeparator
 		? ` ${colors.gray(config.infoSeparator)} `
 		: " ";
-	return `${colors.gray("S:")} ${items.join(sep)}`;
+	return `${colors.gray("Session")} ${items.join(sep)}`;
 }
 
 function formatLimitsPart(
@@ -248,7 +248,7 @@ function formatLimitsPart(
 
 	if (config.cost.enabled && periodCost > 0) {
 		parts.push(
-			`${colors.gray("$")}${colors.dimWhite(formatCost(periodCost, config.cost.format))}`,
+			`${colors.yellow("$")}${colors.yellow(formatCost(periodCost, config.cost.format))}`,
 		);
 	}
 
@@ -267,7 +267,7 @@ function formatLimitsPart(
 
 		if (config.percentage.showValue) {
 			parts.push(
-				`${colors.lightGray(fiveHour.utilization.toString())}${colors.gray("%")}`,
+				`${colors.yellow(Math.round(fiveHour.utilization).toString())}${colors.yellow("%")}`,
 			);
 		}
 	}
@@ -278,15 +278,15 @@ function formatLimitsPart(
 			fiveHour.resets_at,
 		);
 		parts.push(
-			`${colors.gray("(")}${formatPacingDelta(delta)}${colors.gray(")")}`,
+			`${colors.yellow("(")}${formatPacingDelta(delta)}${colors.yellow(")")}`,
 		);
 	}
 
 	if (config.showTimeLeft && fiveHour.resets_at) {
-		parts.push(colors.gray(`(${formatResetTime(fiveHour.resets_at)})`));
+		parts.push(`${colors.yellow("Reset")} ${colors.yellow(`(${formatResetTime(fiveHour.resets_at)})`)}`);
 	}
 
-	return parts.length > 0 ? `${colors.gray("L:")} ${parts.join(" ")}` : "";
+	return parts.length > 0 ? `${colors.yellow("Limits")} ${parts.join(" ")}` : "";
 }
 
 function shouldShowWeekly(
@@ -355,7 +355,7 @@ function formatWeeklyPart(
 
 	if (config.cost.enabled && periodCost > 0) {
 		parts.push(
-			`${colors.gray("$")}${colors.dimWhite(formatCost(periodCost, config.cost.format))}`,
+			`${colors.yellow("$")}${colors.yellow(formatCost(periodCost, config.cost.format))}`,
 		);
 	}
 
@@ -374,7 +374,7 @@ function formatWeeklyPart(
 
 		if (config.percentage.showValue) {
 			parts.push(
-				`${colors.lightGray(sevenDay.utilization.toString())}${colors.gray("%")}`,
+				`${colors.yellow(sevenDay.utilization.toString())}${colors.yellow("%")}`,
 			);
 		}
 	}
@@ -385,15 +385,15 @@ function formatWeeklyPart(
 			sevenDay.resets_at,
 		);
 		parts.push(
-			`${colors.gray("(")}${formatPacingDelta(delta)}${colors.gray(")")}`,
+			`${colors.yellow("(")}${formatPacingDelta(delta)}${colors.yellow(")")}`,
 		);
 	}
 
 	if (config.showTimeLeft && sevenDay.resets_at) {
-		parts.push(colors.gray(`(${formatResetTime(sevenDay.resets_at)})`));
+		parts.push(`${colors.yellow("Reset")} ${colors.yellow(`(${formatResetTime(sevenDay.resets_at)})`)}`);
 	}
 
-	return parts.length > 0 ? `${colors.gray("W:")} ${parts.join(" ")}` : "";
+	return parts.length > 0 ? `${colors.yellow("W:")} ${parts.join(" ")}` : "";
 }
 
 function formatDailyPart(

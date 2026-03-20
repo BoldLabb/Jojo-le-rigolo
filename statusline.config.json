@@ -27,8 +27,8 @@
       "progressBar": {
         "enabled": true,
         "length": 10,
-        "style": "braille",
-        "color": "progressive",
+        "style": "rectangle",
+        "color": "peach",
         "background": "none"
       }
     },
@@ -55,8 +55,8 @@
       "progressBar": {
         "enabled": true,
         "length": 10,
-        "style": "braille",
-        "color": "progressive",
+        "style": "rectangle",
+        "color": "yellow",
         "background": "none"
       }
     }
@@ -72,8 +72,8 @@
       "progressBar": {
         "enabled": true,
         "length": 10,
-        "style": "braille",
-        "color": "progressive",
+        "style": "rectangle",
+        "color": "yellow",
         "background": "none"
       }
     }
