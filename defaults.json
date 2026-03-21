@@ -15,9 +15,9 @@
 		"showUnstaged": true,
 		"showAheadBehind": false
 	},
-	"separator": "•",
+	"separator": "|",
 	"session": {
-		"infoSeparator": null,
+		"infoSeparator": "|",
 		"cost": { "enabled": true, "format": "decimal1" },
 		"duration": { "enabled": true },
 		"tokens": { "enabled": true, "showMax": false, "showDecimals": false },
@@ -62,7 +62,7 @@
 		}
 	},
 	"weeklyUsage": {
-		"enabled": "90%",
+		"enabled": true,
 		"showTimeLeft": true,
 		"showPacingDelta": true,
 		"cost": { "enabled": false, "format": "decimal1" },

@@ -90,7 +90,7 @@ describe("renderStatusline", () => {
 			});
 			const output = renderStatusline(data, config);
 
-			expect(output).toContain("S:");
+			expect(output).not.toContain("1.5");
 		});
 
 		it("should show duration when enabled", () => {
@@ -152,7 +152,7 @@ describe("renderStatusline", () => {
 			});
 			const output = renderStatusline(data, config);
 
-			expect(output).toContain("L:");
+			expect(output).toContain("Limits");
 			expect(output).toContain("50");
 		});
 
@@ -163,7 +163,7 @@ describe("renderStatusline", () => {
 			});
 			const output = renderStatusline(data, config);
 
-			expect(output).not.toContain("L:");
+			expect(output).not.toContain("Limits");
 		});
 
 		it("should show reset time when enabled", () => {

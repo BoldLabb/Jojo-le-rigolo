@@ -5,6 +5,9 @@
  * ALL config decisions happen here, not in data preparation.
  */
 
+import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import type { StatuslineConfig } from "./config-types";
 import {
 	colors,
@@ -18,6 +21,16 @@ import {
 
 const WEEKLY_HOURS = 168; // 7 days * 24 hours
 const FIVE_HOUR_MINUTES = 300; // 5 hours * 60 minutes
+
+function getEffortLevel(): string | null {
+	try {
+		const settingsPath = join(homedir(), ".claude", "settings.json");
+		const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
+		return settings.effortLevel ?? null;
+	} catch {
+		return null;
+	}
+}
 
 // ─────────────────────────────────────────────────────────────
 // RAW DATA TYPES - No pre-formatting, just raw values
@@ -152,23 +165,16 @@ function formatSessionPart(
 		return `${colors.gray("Session")} ${colors.gray("-")}`;
 	}
 
-	const items: string[] = [];
+	const groups: string[] = [];
 
-	if (config.cost.enabled) {
-		const formattedCost = formatCost(cost, config.cost.format);
-		items.push(`${colors.green("$")}${colors.green(formattedCost)}`);
-	}
+	// Group 1: Context (tokens + percentage bar + percentage value + alert200k)
+	const contextParts: string[] = [];
 
 	if (config.tokens.enabled) {
-		const formattedUsed = formatTokens(
-			contextTokens,
-			config.tokens.showDecimals,
-		);
 		if (config.tokens.showMax) {
-			const formattedMax = formatTokens(maxTokens, config.tokens.showDecimals);
-			items.push(`${colors.peach(contextTokens.toString().length > 3 ? Math.round(contextTokens / 1000) + "k" : contextTokens.toString())}${colors.gray("/")}${colors.peach(maxTokens >= 1000000 ? Math.round(maxTokens / 1000000) + "m" : Math.round(maxTokens / 1000) + "k")}`);
+			contextParts.push(`${colors.peach(contextTokens.toString().length > 3 ? Math.round(contextTokens / 1000) + "k" : contextTokens.toString())}${colors.gray("/")}${colors.peach(maxTokens >= 1000000 ? Math.round(maxTokens / 1000000) + "m" : Math.round(maxTokens / 1000) + "k")}`);
 		} else {
-			items.push(colors.peach(contextTokens.toString().length > 3 ? Math.round(contextTokens / 1000) + "k" : contextTokens.toString()));
+			contextParts.push(colors.peach(contextTokens.toString().length > 3 ? Math.round(contextTokens / 1000) + "k" : contextTokens.toString()));
 		}
 	}
 
@@ -194,47 +200,49 @@ function formatSessionPart(
 		}
 
 		if (pctParts.length > 0) {
-			items.push(pctParts.join(" "));
+			contextParts.push(pctParts.join(" "));
 		}
 	}
 
 	if (config.alert200k?.enabled && contextTokens !== null && contextTokens >= 500000) {
-		items.push(colors.orange("⚠>500k"));
+		contextParts.push(colors.orange("⚠>500k"));
 	}
 
-	if (config.outputTokens?.enabled && outputTokens && outputTokens > 0) {
-		const formatted = formatTokens(outputTokens, false);
-		items.push(
-			`${colors.peach("→")}${formatted} ${colors.peach("out")}`,
-		);
+	if (contextParts.length > 0) {
+		groups.push(`${colors.gray("Ctx")} ${contextParts.join(" ")}`);
+	}
+
+	// Group 2: Cost + Time (cost + costPerHour + duration)
+	const costTimeParts: string[] = [];
+
+	if (config.cost.enabled) {
+		const formattedCost = formatCost(cost, config.cost.format);
+		costTimeParts.push(`${colors.gray("S:")} ${colors.green("$")}${colors.green(formattedCost)}`);
 	}
 
 	if (config.costPerHour?.enabled && durationMs > 60000) {
 		const hours = durationMs / 3600000;
 		const cph = cost / hours;
 		const formatted = formatCost(cph, config.costPerHour.format);
-		items.push(
-			`${colors.green("$")}${colors.green(formatted)}${colors.green("/h")}`,
-		);
-	}
-
-	if (config.apiRatio?.enabled && apiDurationMs && durationMs > 0) {
-		const ratio = Math.round((apiDurationMs / durationMs) * 100);
-		items.push(
-			`${colors.gray("API:")}${colors.lightGray(ratio.toString())}${colors.gray("%")}`,
+		costTimeParts.push(
+			`${colors.gray("-")} ${colors.green("$")}${colors.green(formatted)}${colors.green("/h")}`,
 		);
 	}
 
 	if (config.duration.enabled) {
-		items.push(colors.gray(`(${formatDuration(durationMs)})`));
+		costTimeParts.push(colors.gray(`(${formatDuration(durationMs)})`));
 	}
 
-	if (items.length === 0) return "";
+	if (costTimeParts.length > 0) {
+		groups.push(costTimeParts.join(" "));
+	}
+
+	if (groups.length === 0) return "";
 
 	const sep = config.infoSeparator
-		? ` ${colors.gray(config.infoSeparator)} `
+		? ` ${colors.dimWhite(config.infoSeparator)} `
 		: " ";
-	return `${colors.gray("Session")} ${items.join(sep)}`;
+	return groups.join(sep);
 }
 
 function formatLimitsPart(
@@ -283,7 +291,7 @@ function formatLimitsPart(
 	}
 
 	if (config.showTimeLeft && fiveHour.resets_at) {
-		parts.push(`${colors.yellow("Reset")} ${colors.yellow(`(${formatResetTime(fiveHour.resets_at)})`)}`);
+		parts.push(`${colors.yellow("↻")}${colors.yellow(`(${formatResetTime(fiveHour.resets_at)})`)}`);
 	}
 
 	return parts.length > 0 ? `${colors.yellow("Limits")} ${parts.join(" ")}` : "";
@@ -390,7 +398,7 @@ function formatWeeklyPart(
 	}
 
 	if (config.showTimeLeft && sevenDay.resets_at) {
-		parts.push(`${colors.yellow("Reset")} ${colors.yellow(`(${formatResetTime(sevenDay.resets_at)})`)}`);
+		parts.push(`${colors.yellow("↻")}${colors.yellow(`(${formatResetTime(sevenDay.resets_at)})`)}`);
 	}
 
 	return parts.length > 0 ? `${colors.yellow("W:")} ${parts.join(" ")}` : "";
@@ -412,7 +420,7 @@ export function renderStatuslineRaw(
 	data: RawStatuslineData,
 	config: StatuslineConfig,
 ): string {
-	const sep = colors.gray(config.separator);
+	const sep = colors.dimWhite(config.separator);
 	const sections: string[] = [];
 
 	// Line 1: Git + Path + Model
@@ -426,7 +434,11 @@ export function renderStatuslineRaw(
 
 	const isSonnet = data.modelName.toLowerCase().includes("sonnet");
 	if (!isSonnet || config.showSonnetModel) {
-		line1Parts.push(colors.peach(data.modelName));
+		const effortLevel = getEffortLevel();
+		const modelDisplay = effortLevel
+			? `${data.modelName} ${colors.gray(`(${effortLevel})`)}`
+			: data.modelName;
+		line1Parts.push(colors.peach(modelDisplay));
 	}
 
 	sections.push(line1Parts.join(` ${sep} `));
@@ -461,10 +473,6 @@ export function renderStatuslineRaw(
 		config.weeklyUsage,
 	);
 	if (weeklyPart) sections.push(weeklyPart);
-
-	// Daily
-	const dailyPart = formatDailyPart(data.todayCost ?? 0, config.dailySpend);
-	if (dailyPart) sections.push(dailyPart);
 
 	const output = sections.join(` ${sep} `);
 

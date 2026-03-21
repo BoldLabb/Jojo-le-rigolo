@@ -20,7 +20,7 @@ const minimalConfig: StatuslineConfig = {
 		showUnstaged: false,
 	},
 	session: {
-		infoSeparator: null,
+		infoSeparator: "|",
 		cost: { enabled: true, format: "decimal1" },
 		duration: { enabled: false },
 		tokens: { enabled: false, showMax: false, showDecimals: false },
@@ -92,7 +92,7 @@ const fullConfig: StatuslineConfig = {
 		showUnstaged: true,
 	},
 	session: {
-		infoSeparator: null,
+		infoSeparator: "|",
 		cost: { enabled: true, format: "decimal2" },
 		duration: { enabled: true },
 		tokens: { enabled: true, showMax: true, showDecimals: true },
